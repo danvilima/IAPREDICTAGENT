@@ -1,0 +1,242 @@
+[
+  {
+    "code": "GER",
+    "name_pt": "Alemanha",
+    "filename": "ger_alemanha.svg"
+  },
+  {
+    "code": "ARG",
+    "name_pt": "Argentina",
+    "filename": "arg_argentina.svg"
+  },
+  {
+    "code": "ALG",
+    "name_pt": "Argélia",
+    "filename": "alg_argelia.svg"
+  },
+  {
+    "code": "KSA",
+    "name_pt": "Arábia Saudita",
+    "filename": "ksa_arabia_saudita.svg"
+  },
+  {
+    "code": "AUS",
+    "name_pt": "Austrália",
+    "filename": "aus_australia.svg"
+  },
+  {
+    "code": "BRA",
+    "name_pt": "Brasil",
+    "filename": "bra_brasil.svg"
+  },
+  {
+    "code": "BEL",
+    "name_pt": "Bélgica",
+    "filename": "bel_belgica.svg"
+  },
+  {
+    "code": "BIH",
+    "name_pt": "Bósnia e Herzegovina",
+    "filename": "bih_bosnia_e_herzegovina.svg"
+  },
+  {
+    "code": "CPV",
+    "name_pt": "Cabo Verde",
+    "filename": "cpv_cabo_verde.svg"
+  },
+  {
+    "code": "CAN",
+    "name_pt": "Canadá",
+    "filename": "can_canada.svg"
+  },
+  {
+    "code": "CZE",
+    "name_pt": "Chéquia",
+    "filename": "cze_chequia.svg"
+  },
+  {
+    "code": "COL",
+    "name_pt": "Colômbia",
+    "filename": "col_colombia.svg"
+  },
+  {
+    "code": "KOR",
+    "name_pt": "Coreia do Sul",
+    "filename": "kor_coreia_do_sul.svg"
+  },
+  {
+    "code": "CIV",
+    "name_pt": "Costa do Marfim",
+    "filename": "civ_costa_do_marfim.svg"
+  },
+  {
+    "code": "CRO",
+    "name_pt": "Croácia",
+    "filename": "cro_croacia.svg"
+  },
+  {
+    "code": "CUW",
+    "name_pt": "Curaçao",
+    "filename": "cuw_curacao.svg"
+  },
+  {
+    "code": "EGY",
+    "name_pt": "Egito",
+    "filename": "egy_egito.svg"
+  },
+  {
+    "code": "ECU",
+    "name_pt": "Equador",
+    "filename": "ecu_equador.svg"
+  },
+  {
+    "code": "SCO",
+    "name_pt": "Escócia",
+    "filename": "sco_escocia.svg"
+  },
+  {
+    "code": "ESP",
+    "name_pt": "Espanha",
+    "filename": "esp_espanha.svg"
+  },
+  {
+    "code": "USA",
+    "name_pt": "Estados Unidos",
+    "filename": "usa_estados_unidos.svg"
+  },
+  {
+    "code": "FRA",
+    "name_pt": "França",
+    "filename": "fra_franca.svg"
+  },
+  {
+    "code": "GHA",
+    "name_pt": "Gana",
+    "filename": "gha_gana.svg"
+  },
+  {
+    "code": "HAI",
+    "name_pt": "Haiti",
+    "filename": "hai_haiti.svg"
+  },
+  {
+    "code": "NED",
+    "name_pt": "Holanda",
+    "filename": "ned_holanda.svg"
+  },
+  {
+    "code": "ENG",
+    "name_pt": "Inglaterra",
+    "filename": "eng_inglaterra.svg"
+  },
+  {
+    "code": "IRQ",
+    "name_pt": "Iraque",
+    "filename": "irq_iraque.svg"
+  },
+  {
+    "code": "IRN",
+    "name_pt": "Irã",
+    "filename": "irn_ira.svg"
+  },
+  {
+    "code": "JPN",
+    "name_pt": "Japão",
+    "filename": "jpn_japao.svg"
+  },
+  {
+    "code": "JOR",
+    "name_pt": "Jordânia",
+    "filename": "jor_jordania.svg"
+  },
+  {
+    "code": "MAR",
+    "name_pt": "Marrocos",
+    "filename": "mar_marrocos.svg"
+  },
+  {
+    "code": "MEX",
+    "name_pt": "México",
+    "filename": "mex_mexico.svg"
+  },
+  {
+    "code": "NOR",
+    "name_pt": "Noruega",
+    "filename": "nor_noruega.svg"
+  },
+  {
+    "code": "NZL",
+    "name_pt": "Nova Zelândia",
+    "filename": "nzl_nova_zelandia.svg"
+  },
+  {
+    "code": "PAN",
+    "name_pt": "Panamá",
+    "filename": "pan_panama.svg"
+  },
+  {
+    "code": "PAR",
+    "name_pt": "Paraguai",
+    "filename": "par_paraguai.svg"
+  },
+  {
+    "code": "POR",
+    "name_pt": "Portugal",
+    "filename": "por_portugal.svg"
+  },
+  {
+    "code": "QAT",
+    "name_pt": "Qatar",
+    "filename": "qat_qatar.svg"
+  },
+  {
+    "code": "COD",
+    "name_pt": "República Democrática do Congo",
+    "filename": "cod_rd_congo.svg"
+  },
+  {
+    "code": "SEN",
+    "name_pt": "Senegal",
+    "filename": "sen_senegal.svg"
+  },
+  {
+    "code": "SWE",
+    "name_pt": "Suécia",
+    "filename": "swe_suecia.svg"
+  },
+  {
+    "code": "SUI",
+    "name_pt": "Suíça",
+    "filename": "sui_suica.svg"
+  },
+  {
+    "code": "TUN",
+    "name_pt": "Tunísia",
+    "filename": "tun_tunisia.svg"
+  },
+  {
+    "code": "TUR",
+    "name_pt": "Turquia",
+    "filename": "tur_turquia.svg"
+  },
+  {
+    "code": "URU",
+    "name_pt": "Uruguai",
+    "filename": "uru_uruguai.svg"
+  },
+  {
+    "code": "UZB",
+    "name_pt": "Uzbequistão",
+    "filename": "uzb_uzbequistao.svg"
+  },
+  {
+    "code": "RSA",
+    "name_pt": "África do Sul",
+    "filename": "rsa_africa_do_sul.svg"
+  },
+  {
+    "code": "AUT",
+    "name_pt": "Áustria",
+    "filename": "aut_austria.svg"
+  }
+]
