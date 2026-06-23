@@ -64,6 +64,26 @@ def buscar_probabilidades():
     return df
 
 
+@st.cache_data(ttl=3600)
+def buscar_probabilidades_completas():
+    engine = get_engine()
+    query = """
+        SELECT 
+            selecao, 
+            prob_grupo, 
+            prob_oitavas, 
+            prob_quartas, 
+            prob_semi, 
+            prob_final, 
+            prob_campea
+        FROM gold_probabilidades_copa
+        ORDER BY prob_campea DESC;
+    """
+    with engine.connect() as conexao:
+        df = pd.read_sql_query(query, cast(Any, conexao))
+    return df
+
+
 engine, df_jogos, df_grupos, df_mata = injetar_dependencias()
 
 
@@ -76,8 +96,9 @@ page = st.sidebar.radio(
     "Navegação",
     [
         "Probabilidades Pré-computadas",
-        "Simulação ao vivo",
         "Explorador de partidas",
+        "Ranking dos Palpites",
+        "Estatísticas em tempo real",
     ],
 )
 
@@ -169,131 +190,6 @@ if page == "Probabilidades Pré-computadas":
 
 
 # ==========================================
-# PÁGINA 2: SIMULADOR AO VIVO
-# ==========================================
-elif page == "Simulação ao vivo":
-    st.title("🎲 Multiverso da Copa (Ao Vivo)")
-
-    st.markdown(
-        "A cada clique, a Inteligência Artificial joga os dados matemáticos "
-        "do Poisson gerando uma nova linha temporal exclusiva da Copa inteira."
-    )
-
-    if st.button("▶ Rodar Simulação Interativa!", type="primary"):
-        np.random.seed(None)
-
-        with st.spinner("Gerando universos alternativos..."):
-            resultado = simular_torneio_detalhado(df_jogos, df_grupos, df_mata)
-            st.session_state["resultado_live"] = resultado
-
-    if "resultado_live" in st.session_state:
-        res = st.session_state["resultado_live"]
-        podio = res["podio"]
-
-        st.markdown(
-            f'<div style="padding: 1rem; border-radius: 0.5rem; background-color: rgba(40, 167, 69, 0.2); margin-bottom: 1rem;">'
-            f'<h3 style="margin: 0; color: #28a745;">🥇 <b>CAMPEÃO:</b> {com_bandeira_html(podio.get("campeao", "Unknown"))}</h3>'
-            f"</div>",
-            unsafe_allow_html=True,
-        )
-
-        c1, c2 = st.columns(2)
-
-        with c1:
-            st.markdown(
-                f'<div style="padding: 0.75rem; border-radius: 0.5rem; background-color: rgba(23, 162, 184, 0.2);">'
-                f'<span style="color: #17a2b8; font-weight: bold;">🥈 Vice:</span> {com_bandeira_html(podio.get("vice", "Unknown"))}'
-                f"</div>",
-                unsafe_allow_html=True,
-            )
-
-        with c2:
-            st.markdown(
-                f'<div style="padding: 0.75rem; border-radius: 0.5rem; background-color: rgba(255, 193, 7, 0.2);">'
-                f'<span style="color: #ffc107; font-weight: bold;">🥉 Terceiro:</span> {com_bandeira_html(podio.get("terceiro", "Unknown"))}'
-                f"</div>",
-                unsafe_allow_html=True,
-            )
-
-        st.markdown("---")
-        st.subheader("⚔️ Caminho do Mata-Mata")
-
-        mata_data = res["mata_mata"]
-
-        etapas = [
-            ("Final", "FINAL"),
-            ("Disputa 3º", "3RD_PLACE"),
-            ("Semifinais", "SF"),
-            ("Quartas", "QF"),
-            ("Oitavas", "R16"),
-            ("32-Avos (R32)", "R32"),
-        ]
-
-        for titulo, chave in etapas:
-            jogos_fase = mata_data.get(chave, [])
-
-            if not jogos_fase:
-                continue
-
-            with st.expander(
-                f"{titulo} ({len(jogos_fase)} jogos)",
-                expanded=(chave == "FINAL"),
-            ):
-                for j in jogos_fase:
-                    tc = com_bandeira_html(j["time_casa"])
-                    tv = com_bandeira_html(j["time_visitante"])
-                    gc = j["gols_casa"]
-                    gv = j["gols_visitante"]
-
-                    texto_placar = f"{tc} <b>{gc} x {gv}</b> {tv}"
-
-                    if j["penaltis"]:
-                        pc = j["pen_casa"]
-                        pv = j["pen_visitante"]
-                        texto_placar += f" <i>(Pênaltis: {pc}-{pv})</i>"
-
-                    st.markdown(texto_placar, unsafe_allow_html=True)
-
-        st.markdown("---")
-        st.subheader("📋 Classificação dos Grupos")
-
-        df_g = res["grupos"].copy()
-
-        # Add Icon column
-        df_g.insert(0, "Ícone", df_g["selecao"].apply(obter_svg_data_uri))
-
-        cols_pt = [
-            "grupo",
-            "posicao",
-            "Ícone",
-            "selecao",
-            "jogos",
-            "vitorias",
-            "empates",
-            "derrotas",
-            "gols_pro",
-            "gols_contra",
-            "saldo_gols",
-            "pontos",
-        ]
-
-        df_g = df_g[cols_pt]
-
-        for g, df_grupo in df_g.groupby("grupo"):
-            with st.expander(f"Grupo {g}"):
-                st.dataframe(
-                    df_grupo.drop("grupo", axis=1).style.highlight_max(
-                        subset=["pontos"]
-                    ),
-                    hide_index=True,
-                    use_container_width=True,
-                    column_config={
-                        "Ícone": st.column_config.ImageColumn("Ícone", width="small")
-                    },
-                )
-
-
-# ==========================================
 # PÁGINA 3: EXPLORADOR DE PARTIDAS 1v1
 # ==========================================
 elif page == "Explorador de partidas":
@@ -359,3 +255,316 @@ elif page == "Explorador de partidas":
         st.progress(p_v, text=f"Vitória {time1} ({p_v:.1%})")
         st.progress(p_e, text=f"Empate ({p_e:.1%})")
         st.progress(p_d, text=f"Vitória {time2} ({p_d:.1%})")
+
+# # ==========================================
+# PÁGINA 4: RANKING DOS PALPITES
+# ==========================================
+elif page == "Ranking dos Palpites":
+    st.title("🏆 Ranking Oficial da Copa")
+    st.markdown(
+        "Confira a pontuação dos participantes do bolão com base nos resultados reais da Copa."
+    )
+
+    from palpites import carregar_palpites
+    from core.tournament_state import get_current_real_results
+    from core.scoring import process_ranking
+    from live_results import fetch_daily_fixtures
+    from results_repository import upsert_fixtures, get_last_sync_time, update_sync_time
+    import datetime
+
+    col1, col2 = st.columns([3, 1])
+
+    with col1:
+        sync_key = "fixtures_today"
+        last_sync = get_last_sync_time(sync_key)
+
+        if last_sync:
+            if last_sync.tzinfo is None:
+                last_sync = last_sync.replace(tzinfo=datetime.timezone.utc)
+
+            st.caption(
+                f"Última sincronização: {last_sync.strftime('%d/%m/%Y %H:%M:%S')}"
+            )
+        else:
+            st.caption("Última sincronização: Nunca")
+
+    with col2:
+        if st.button("🔄 Buscar resultados agora"):
+            now = datetime.datetime.now(datetime.timezone.utc)
+
+            if last_sync and (now - last_sync).total_seconds() < 900:
+                st.warning("⚠️ Aguarde 15 minutos entre atualizações.")
+            else:
+                with st.spinner("Buscando resultados na API-Football..."):
+                    try:
+                        fixtures = fetch_daily_fixtures()
+                        new_finished = upsert_fixtures(fixtures)
+                        update_sync_time(sync_key)
+
+                        # Limpa cache para garantir que o ranking use os dados novos
+                        st.cache_data.clear()
+
+                        if new_finished:
+                            st.success(
+                                "Novos resultados finalizados encontrados! Atualizando ranking..."
+                            )
+                        else:
+                            st.info(
+                                "Sincronização concluída. Nenhum novo jogo finalizado."
+                            )
+
+                    except Exception as e:
+                        st.error(f"Erro ao buscar API: {e}")
+
+    df_palpites = carregar_palpites()
+    real_results = get_current_real_results()
+    df_ranking = process_ranking(df_palpites, real_results)
+
+    if not df_ranking.empty:
+        colunas_ranking = [
+            "posicao",
+            "user_name",
+            "total_score",
+            "palpites_corretos",
+            "score_grupos",
+            "score_mata_mata",
+            "score_finais",
+        ]
+
+        colunas_existentes = [
+            coluna for coluna in colunas_ranking if coluna in df_ranking.columns
+        ]
+
+        st.dataframe(
+            df_ranking[colunas_existentes],
+            use_container_width=True,
+            hide_index=True,
+        )
+
+        # ==========================================
+        # RESUMO AUTOMÁTICO SEM LLM
+        # ==========================================
+        st.markdown("---")
+        st.subheader("📊 Resumo Automático")
+
+        lider = df_ranking.iloc[0]
+
+        nome_lider = lider.get("user_name", "Participante")
+        pontos_lider = lider.get("total_score", 0)
+        palpites_corretos = lider.get("palpites_corretos", 0)
+        score_grupos = lider.get("score_grupos", 0)
+        score_mata_mata = lider.get("score_mata_mata", 0)
+        score_finais = lider.get("score_finais", 0)
+
+        total_participantes = len(df_ranking)
+
+        st.info(
+            f"🏆 **{nome_lider}** está liderando o ranking com "
+            f"**{pontos_lider} pontos**. "
+            f"Até agora, o líder soma **{palpites_corretos} palpites corretos**, "
+            f"com **{score_grupos} pontos em grupos**, "
+            f"**{score_mata_mata} pontos no mata-mata** e "
+            f"**{score_finais} pontos em finais/terceiro lugar**."
+        )
+
+        st.caption(
+            f"O ranking possui {total_participantes} participante(s) e é calculado "
+            "automaticamente com base nos resultados reais já sincronizados."
+        )
+
+        if total_participantes >= 2:
+            segundo = df_ranking.iloc[1]
+            nome_segundo = segundo.get("user_name", "Segundo colocado")
+            pontos_segundo = segundo.get("total_score", 0)
+            diferenca = pontos_lider - pontos_segundo
+
+            st.warning(
+                f"🥈 **{nome_segundo}** está em segundo lugar com "
+                f"**{pontos_segundo} pontos**, a **{diferenca} ponto(s)** do líder."
+            )
+
+    else:
+        st.warning(
+            "Nenhum palpite foi registrado ainda ou não há resultados processados."
+        )
+
+# ==========================================
+# PÁGINA 5: ESTATÍSTICAS EM TEMPO REAL
+# ==========================================
+elif page == "Estatísticas em tempo real":
+    st.title("📈 Estatísticas em tempo real")
+    st.markdown(
+        "⚠️ **Aviso:** Estas são projeções dinâmicas estimadas baseadas no desempenho atual da vida real. **Não são probabilidades oficiais consolidadas** (que requerem milhares de simulações com Monte Carlo)."
+    )
+
+    from live_results import fetch_daily_fixtures
+    from results_repository import (
+        upsert_fixtures,
+        get_last_sync_time,
+        update_sync_time,
+        get_all_real_results,
+    )
+    import datetime
+    from core.live_podium_stats import calcular_estatisticas_podio
+
+    col1, col2 = st.columns([3, 1])
+
+    with col1:
+        sync_key = "fixtures_today_stats"
+        last_sync = get_last_sync_time(sync_key)
+
+        if last_sync:
+            if last_sync.tzinfo is None:
+                last_sync = last_sync.replace(tzinfo=datetime.timezone.utc)
+            st.caption(
+                f"Última sincronização: {last_sync.strftime('%d/%m/%Y %H:%M:%S')}"
+            )
+        else:
+            st.caption("Última sincronização: Nunca")
+
+    with col2:
+        if st.button("🔄 Sincronizar dados da API"):
+            now = datetime.datetime.now(datetime.timezone.utc)
+            if last_sync and (now - last_sync).total_seconds() < 900:
+                st.warning("⚠️ Aguarde 15 minutos entre atualizações.")
+            else:
+                with st.spinner("Buscando resultados da API..."):
+                    try:
+                        fixtures = fetch_daily_fixtures()
+                        upsert_fixtures(fixtures)
+                        update_sync_time(sync_key)
+                        st.cache_data.clear()
+                        st.success("Dados atualizados!")
+                    except Exception as e:
+                        st.error(f"Erro ao buscar API: {e}")
+
+    df_probs = buscar_probabilidades_completas()
+    df_real = get_all_real_results()
+
+    if not df_probs.empty:
+        df_dyn = calcular_estatisticas_podio(df_probs, df_real)
+
+        # Adiciona Ícones e Formatação Percentual
+        df_dyn["Ícone"] = df_dyn["selecao"].apply(obter_svg_data_uri)
+        df_dyn["% Campeão"] = df_dyn["chance_campeao"] * 100
+        df_dyn["% Vice"] = df_dyn["chance_vice"] * 100
+        df_dyn["% Terceiro"] = df_dyn["chance_terceiro"] * 100
+
+        # Gráficos de barras Altair
+        st.markdown("---")
+
+        c_champ, c_vice, c_third = st.columns(3)
+
+        with c_champ:
+            st.subheader("🥇 Top 12 Campeão")
+            df_champ = df_dyn.sort_values("chance_campeao", ascending=False).head(12)
+            st.altair_chart(
+                alt.Chart(df_champ)
+                .mark_bar(color="#FFD700")
+                .encode(
+                    x=alt.X(
+                        "selecao:N",
+                        sort="-y",
+                        title=None,
+                        axis=alt.Axis(labelAngle=-45),
+                    ),
+                    y=alt.Y("% Campeão:Q", title="Chance (%)"),
+                    tooltip=["selecao", "% Campeão"],
+                )
+                .properties(height=300),
+                use_container_width=True,
+            )
+
+        with c_vice:
+            st.subheader("🥈 Top 12 Vice")
+            df_vice = df_dyn.sort_values("chance_vice", ascending=False).head(12)
+            st.altair_chart(
+                alt.Chart(df_vice)
+                .mark_bar(color="#C0C0C0")
+                .encode(
+                    x=alt.X(
+                        "selecao:N",
+                        sort="-y",
+                        title=None,
+                        axis=alt.Axis(labelAngle=-45),
+                    ),
+                    y=alt.Y("% Vice:Q", title="Chance (%)"),
+                    tooltip=["selecao", "% Vice"],
+                )
+                .properties(height=300),
+                use_container_width=True,
+            )
+
+        with c_third:
+            st.subheader("🥉 Top 12 Terceiro")
+            df_third = df_dyn.sort_values("chance_terceiro", ascending=False).head(12)
+            st.altair_chart(
+                alt.Chart(df_third)
+                .mark_bar(color="#CD7F32")
+                .encode(
+                    x=alt.X(
+                        "selecao:N",
+                        sort="-y",
+                        title=None,
+                        axis=alt.Axis(labelAngle=-45),
+                    ),
+                    y=alt.Y("% Terceiro:Q", title="Chance (%)"),
+                    tooltip=["selecao", "% Terceiro"],
+                )
+                .properties(height=300),
+                use_container_width=True,
+            )
+
+        # Tabela Completa
+        st.markdown("---")
+        st.subheader("📋 Tabela Completa de Estatísticas")
+
+        # Formatando para exibição
+        df_display = df_dyn[
+            [
+                "Ícone",
+                "selecao",
+                "pontos",
+                "jogos",
+                "gols_pro",
+                "gols_contra",
+                "saldo_gols",
+                "fator_performance",
+                "chance_campeao",
+                "chance_vice",
+                "chance_terceiro",
+            ]
+        ].copy()
+
+        for col in ["chance_campeao", "chance_vice", "chance_terceiro"]:
+            df_display[col] = df_display[col].apply(lambda x: f"{x:.2%}")
+
+        df_display["fator_performance"] = df_display["fator_performance"].apply(
+            lambda x: f"{x:.2f}x"
+        )
+
+        # Tradução de colunas
+        df_display.columns = [
+            "Ícone",
+            "Seleção",
+            "Pts",
+            "Jogos",
+            "GP",
+            "GC",
+            "SG",
+            "Fator Perf.",
+            "Campeão",
+            "Vice",
+            "Terceiro",
+        ]
+
+        st.dataframe(
+            df_display,
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "Ícone": st.column_config.ImageColumn("Ícone", width="small")
+            },
+        )
+    else:
+        st.info("Nenhuma probabilidade pré-computada encontrada.")
