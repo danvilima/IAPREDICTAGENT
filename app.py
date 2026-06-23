@@ -695,11 +695,6 @@ elif page == "Estatísticas em tempo real":
             [
                 "Ícone",
                 "selecao",
-                "pontos",
-                "jogos",
-                "gols_pro",
-                "gols_contra",
-                "saldo_gols",
                 "fator_performance",
                 "chance_campeao",
                 "chance_vice",
@@ -718,11 +713,6 @@ elif page == "Estatísticas em tempo real":
         df_display.columns = [
             "Ícone",
             "Seleção",
-            "Pts",
-            "Jogos",
-            "GP",
-            "GC",
-            "SG",
             "Fator Perf.",
             "Campeão",
             "Vice",
