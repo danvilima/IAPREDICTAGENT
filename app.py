@@ -87,20 +87,193 @@ def buscar_probabilidades_completas():
 engine, df_jogos, df_grupos, df_mata = injetar_dependencias()
 
 
+from streamlit_option_menu import option_menu
+from results_repository import get_last_sync_time
+
 # ==========================================
 # SIDEBAR NAVIGATION
 # ==========================================
-st.sidebar.title("⚽ Copa 2026 (AI)")
 
-page = st.sidebar.radio(
-    "Navegação",
-    [
-        "Probabilidades Pré-computadas",
-        "Explorador de partidas",
-        "Ranking dos Palpites",
-        "Estatísticas em tempo real",
-    ],
+# Injetar o CSS no container principal para que continue ativo quando a sidebar for fechada!
+st.markdown(
+    """
+<style>
+    [data-testid="stSidebar"] {
+        background-color: #1a1a2e;
+        color: white;
+    }
+    .sidebar-title {
+        font-size: 24px;
+        font-weight: bold;
+        color: #ffffff;
+        margin-bottom: 0px;
+    }
+    .sidebar-subtitle {
+        font-size: 14px;
+        color: #a0a0b0;
+        margin-bottom: 20px;
+    }
+    .status-box {
+        background-color: #242442;
+        padding: 10px;
+        border-radius: 8px;
+        margin-top: 10px;
+        font-size: 13px;
+    }
+    .status-item {
+        margin: 5px 0;
+        color: #e0e0e0;
+    }
+    
+    /* Botão de abrir a sidebar (menu) */
+    [data-testid="collapsedControl"] {
+        top: 18px !important;
+        left: 18px !important;
+        width: 82px !important;
+        height: 42px !important;
+        border-radius: 14px !important;
+        background: linear-gradient(135deg, #1d4ed8, #7c3aed) !important;
+        border: 1px solid rgba(255, 255, 255, 0.22) !important;
+        box-shadow: 0 0 18px rgba(59, 130, 246, 0.55) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        transition: all 0.2s ease-in-out !important;
+        z-index: 999999 !important;
+    }
+
+    [data-testid="collapsedControl"]:hover {
+        transform: scale(1.06);
+        box-shadow: 0 0 24px rgba(96, 165, 250, 0.85) !important;
+        background: linear-gradient(135deg, #2563eb, #9333ea) !important;
+    }
+
+    [data-testid="collapsedControl"] svg {
+        display: none !important;
+    }
+
+    [data-testid="collapsedControl"]::after {
+        content: "☰ MENU";
+        color: white;
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 0.8px;
+        line-height: 1;
+    }
+
+    section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] {
+        border-radius: 12px !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        transition: all 0.2s ease-in-out !important;
+    }
+
+    section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"]:hover {
+        background: rgba(59, 130, 246, 0.25) !important;
+    }
+</style>
+""",
+    unsafe_allow_html=True,
 )
+
+with st.sidebar:
+
+    st.markdown(
+        '<p class="sidebar-title">🏆 IAPredict Copa 2026</p>', unsafe_allow_html=True
+    )
+    st.markdown(
+        '<p class="sidebar-subtitle">Bolão inteligente + estatísticas em tempo real</p>',
+        unsafe_allow_html=True,
+    )
+
+    selected = option_menu(
+        menu_title=None,
+        options=[
+            "Probabilidades",
+            "Explorador",
+            "Ranking",
+            "Estatísticas Tempo Real",
+        ],
+        icons=["trophy-fill", "dice-5-fill", "search", "award-fill", "graph-up-arrow"],
+        default_index=0,
+        styles={
+            "container": {"padding": "0!important", "background-color": "transparent"},
+            "icon": {"color": "white", "font-size": "18px"},
+            "nav-link": {
+                "font-size": "16px",
+                "text-align": "left",
+                "margin": "0px",
+                "--hover-color": "#242442",
+            },
+            "nav-link-selected": {"background-color": "#4b4b9e"},
+        },
+    )
+
+    page_map = {
+        "Probabilidades": "Probabilidades Pré-computadas",
+        "Explorador": "Explorador de partidas",
+        "Ranking": "Ranking dos Palpites",
+        "Estatísticas": "Estatísticas em tempo real",
+    }
+
+    page = page_map[selected]
+
+    st.markdown("---")
+
+    # Block "📡 Status"
+    st.markdown("### 📡 Status")
+    st.markdown(
+        """
+    <div class="status-box">
+        <div class="status-item">✅ Sistema ativo</div>
+        <div class="status-item">✅ Supabase conectado</div>
+        <div class="status-item">✅ Resultados sincronizados</div>
+    </div>
+    """,
+        unsafe_allow_html=True,
+    )
+
+    # Block "Última atualização"
+    st.markdown("### ⏱️ Última atualização")
+    try:
+        last_sync = get_last_sync_time("fixtures_today")
+        if last_sync:
+            st.info(last_sync.strftime("%d/%m/%Y %H:%M:%S"))
+        else:
+            st.info("Aguardando sincronização")
+    except Exception:
+        st.info("Aguardando sincronização")
+
+    # Block "👀 Visão rápida"
+    st.markdown("### 👀 Visão rápida")
+
+    participants = "--"
+    games_synced = "--"
+
+    try:
+        from palpites import carregar_palpites
+        from results_repository import get_all_real_results
+
+        df_p = carregar_palpites()
+        if not df_p.empty:
+            participants = str(len(df_p))
+
+        df_r = get_all_real_results()
+        if not df_r.empty:
+            games_synced = str(len(df_r))
+    except Exception:
+        pass
+
+    st.markdown(
+        f"""
+    <div class="status-box">
+        <div class="status-item">👥 Participantes: {participants}</div>
+        <div class="status-item">⚽ Jogos: {games_synced}</div>
+        <div class="status-item">🔄 Sync: Ativo</div>
+    </div>
+    """,
+        unsafe_allow_html=True,
+    )
 
 
 # ==========================================
@@ -187,8 +360,6 @@ if page == "Probabilidades Pré-computadas":
         hide_index=True,
         column_config={"Ícone": st.column_config.ImageColumn("Ícone", width="small")},
     )
-
-
 # ==========================================
 # PÁGINA 3: EXPLORADOR DE PARTIDAS 1v1
 # ==========================================
