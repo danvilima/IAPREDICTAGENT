@@ -213,7 +213,7 @@ with st.sidebar:
         "Probabilidades": "Probabilidades Pré-computadas",
         "Explorador": "Explorador de partidas",
         "Ranking": "Ranking dos Palpites",
-        "Estatísticas": "Estatísticas em tempo real",
+        "Estatísticas Tempo Real": "Estatísticas em tempo real",
     }
 
     page = page_map[selected]
