@@ -1,3 +1,4 @@
+from textwrap import dedent
 from typing import Any, cast
 import os
 import sys
@@ -229,7 +230,9 @@ with st.sidebar:
         <div class="status-item">✅ Supabase conectado</div>
         <div class="status-item">✅ Resultados sincronizados</div>
     </div>
-    """,
+    """.replace(
+            "\n", ""
+        ),
         unsafe_allow_html=True,
     )
 
@@ -271,7 +274,9 @@ with st.sidebar:
         <div class="status-item">⚽ Jogos: {games_synced}</div>
         <div class="status-item">🔄 Sync: Ativo</div>
     </div>
-    """,
+    """.replace(
+            "\n", ""
+        ),
         unsafe_allow_html=True,
     )
 
@@ -538,20 +543,22 @@ elif page == "Ranking dos Palpites":
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # === RESUMO AUTOMÁTICO ===
+        # ==========================================
+        # RESUMO AUTOMÁTICO
+        # ==========================================
+        st.markdown("---")
+
+        lider = df_ranking.iloc[0]
+
         nome_lider = lider.get("user_name", "Participante")
+        pontos_lider = lider.get("total_score", 0)
         palpites_corretos = lider.get("palpites_corretos", 0)
         score_grupos = lider.get("score_grupos", 0)
         score_mata_mata = lider.get("score_mata_mata", 0)
         score_finais = lider.get("score_finais", 0)
 
-        html_summary = f"""
-        <div class="ranking-card" style="border-left: 5px solid #10b981; margin-bottom: 25px;">
-            <h4 style="margin-top: 0;">📊 Resumo Automático</h4>
-            <p style="margin-bottom: 5px;">🏆 <b>{nome_lider}</b> lidera com <b>{pontos_lider} pontos</b>. 
-            Acumula <b>{palpites_corretos} palpites corretos</b> 
-            (Grupos: {score_grupos} | Mata-mata: {score_mata_mata} | Finais: {score_finais}).</p>
-        """
+        total_participantes = len(df_ranking)
+        segundo_html = ""
 
         if total_participantes >= 2:
             segundo = df_ranking.iloc[1]
@@ -560,71 +567,115 @@ elif page == "Ranking dos Palpites":
             diferenca = pontos_lider - pontos_segundo
 
             if diferenca == 0:
-                html_summary += f"""
-                <p style="margin-bottom: 0; color: #fbbf24;">⚠️ <b>Empate no topo!</b> <b>{nome_segundo}</b> também tem <b>{pontos_segundo} pontos</b>.</p>
-                """
-            else:
-                html_summary += f"""
-                <p style="margin-bottom: 0; color: #fbbf24;">🥈 <b>{nome_segundo}</b> vem logo atrás com 
-                <b>{pontos_segundo} pontos</b> (diferença de <b>{diferenca} pts</b>).</p>
-                """
-
-        html_summary += "</div>"
-        st.markdown(html_summary, unsafe_allow_html=True)
-
-        # === SEÇÃO 2: PÓDIO TOP 3 ===
-        st.markdown("### 🏆 Pódio")
-        top3 = df_ranking.head(3)
-        cols_podium = st.columns(3)
-        classes_podium = ["gold-card", "silver-card", "bronze-card"]
-        medalhas = ["🥇 1º Lugar", "🥈 2º Lugar", "🥉 3º Lugar"]
-
-        for i in range(min(3, len(top3))):
-            row = top3.iloc[i]
-            with cols_podium[i]:
-                st.markdown(
+                segundo_html = dedent(
                     f"""
-                <div class="podium-card {classes_podium[i]}">
-                    <div style="font-size: 18px; font-weight: bold;">{medalhas[i]}</div>
-                    <div style="font-size: 24px; font-weight: 900; margin-top: 5px; word-wrap: break-word;">{row.get("user_name", "Anônimo")}</div>
-                    <div class="score-big">{row.get("total_score", 0)} pts</div>
-                    <div class="ranking-meta">✅ Acertos: {row.get("palpites_corretos", 0)}</div>
-                    <div class="ranking-meta">Grupos: {row.get("score_grupos", 0)}</div>
-                    <div class="ranking-meta">Mata-mata: {row.get("score_mata_mata", 0)}</div>
-                    <div class="ranking-meta">Finais: {row.get("score_finais", 0)}</div>
-                </div>
-                """,
-                    unsafe_allow_html=True,
-                )
+                    <p class="summary-second warning">
+                        ⚠️ <b>Empate no topo!</b> <b>{nome_segundo}</b> também tem 
+                        <b>{pontos_segundo} pontos</b>.
+                    </p>
+                    """
+                ).strip()
+            else:
+                segundo_html = dedent(
+                    f"""
+                    <p class="summary-second">
+                        🥈 <b>{nome_segundo}</b> vem logo atrás com 
+                        <b>{pontos_segundo} pontos</b>, diferença de 
+                        <b>{diferenca} ponto(s)</b>.
+                    </p>
+                    """
+                ).strip()
 
-        # === SEÇÃO 3: DEMAIS PARTICIPANTES ===
+        html_summary = dedent(
+            f"""
+            <div class="summary-card">
+                <h3>📊 Resumo Automático</h3>
+
+                <p class="summary-main">
+                    🏆 <b>{nome_lider}</b> lidera com 
+                    <b>{pontos_lider} pontos</b>. 
+                    Acumula <b>{palpites_corretos} palpites corretos</b>.
+                </p>
+
+                <div class="summary-grid">
+                    <div>
+                        <span>Grupos</span>
+                        <strong>{score_grupos}</strong>
+                    </div>
+                    <div>
+                        <span>Mata-mata</span>
+                        <strong>{score_mata_mata}</strong>
+                    </div>
+                    <div>
+                        <span>Finais</span>
+                        <strong>{score_finais}</strong>
+                    </div>
+                </div>
+
+                {segundo_html}
+            </div>
+            """
+        ).strip()
+
+        st.markdown(html_summary.replace("\n", ""), unsafe_allow_html=True)
+
+        # === SEÇÃO 3: CARDS DE PARTICIPANTES ===
+        def render_ranking_card(row, index, destaque_cor="#6366f1", medalha=""):
+            pos = int(row.get("posicao", index + 1))
+            nome = row.get("user_name", "Anônimo")
+            pontos = row.get("total_score", 0)
+            acertos = row.get("palpites_corretos", 0)
+            grupos = row.get("score_grupos", 0)
+            mata_mata = row.get("score_mata_mata", 0)
+            finais = row.get("score_finais", 0)
+
+            titulo = f"#{pos} {medalha} &mdash; {nome}" if medalha else f"#{pos} &mdash; {nome}"
+
+            card_html = dedent(
+                f"""
+                <div class="ranking-card" style="border-left-color: {destaque_cor};">
+                    <div class="flex-row">
+                        <div class="other-rank-name">
+                            {titulo}
+                        </div>
+                        <div style="font-size: 20px; font-weight: bold; color: {destaque_cor};">
+                            {pontos} pts
+                        </div>
+                    </div>
+
+                    <div class="ranking-meta">
+                        ✅ Acertos: {acertos} &nbsp;|&nbsp;
+                        Grupos: {grupos} &nbsp;|&nbsp;
+                        Mata-mata: {mata_mata} &nbsp;|&nbsp;
+                        Finais: {finais}
+                    </div>
+                </div>
+                """
+            ).strip()
+
+            st.markdown(card_html.replace("\n", ""), unsafe_allow_html=True)
+
+        st.markdown("<br><h3>🏆 Top 3</h3>", unsafe_allow_html=True)
+
+        top_colors = {
+            1: ("#FFDE21", "🥇"),
+            2: ("#D1D5DB", "🥈"),
+            3: ("#CD7F32", "🥉"),
+        }
+
+        for i in range(min(3, len(df_ranking))):
+            row = df_ranking.iloc[i]
+            pos = int(row.get("posicao", i + 1))
+            cor, medalha = top_colors.get(pos, ("#6366f1", ""))
+            render_ranking_card(row, index=i, destaque_cor=cor, medalha=medalha)
+
         if len(df_ranking) > 3:
             st.markdown("### 🏃 Demais Participantes")
+
             for i in range(3, len(df_ranking)):
-                row = df_ranking.iloc[i]
-                pos = row.get("posicao", i + 1)
+                render_ranking_card(df_ranking.iloc[i], index=i, destaque_cor="#6366f1", medalha="")
 
-                st.markdown(
-                    f"""
-                <div class="ranking-card">
-                    <div class="flex-row">
-                        <div class="other-rank-name">#{pos} &mdash; {row.get("user_name", "Anônimo")}</div>
-                        <div style="font-size: 20px; font-weight: bold; color: #60a5fa;">{row.get("total_score", 0)} pts</div>
-                    </div>
-                    <div class="ranking-meta">
-                        ✅ Acertos: {row.get("palpites_corretos", 0)} &nbsp;|&nbsp; 
-                        Grupos: {row.get("score_grupos", 0)} &nbsp;|&nbsp; 
-                        Mata-mata: {row.get("score_mata_mata", 0)} &nbsp;|&nbsp; 
-                        Finais: {row.get("score_finais", 0)}
-                    </div>
-                </div>
-                """,
-                    unsafe_allow_html=True,
-                )
-
-        st.markdown("<br>", unsafe_allow_html=True)
-
-        # === SEÇÃO 4: TABELA COMPLETA OPCIONAL ===
+        # === TABELA COMPLETA OPCIONAL ===
         with st.expander("📋 Ver tabela completa"):
             colunas_ranking = [
                 "posicao",
@@ -635,25 +686,16 @@ elif page == "Ranking dos Palpites":
                 "score_mata_mata",
                 "score_finais",
             ]
+
             colunas_existentes = [
-                col for col in colunas_ranking if col in df_ranking.columns
+                coluna for coluna in colunas_ranking if coluna in df_ranking.columns
             ]
-            df_display = df_ranking[colunas_existentes].copy()
 
-            # Renomear colunas para exibição bonita
-            renames = {
-                "posicao": "Posição",
-                "user_name": "Participante",
-                "total_score": "Pontos",
-                "palpites_corretos": "Acertos",
-                "score_grupos": "Grupos",
-                "score_mata_mata": "Mata-mata",
-                "score_finais": "Finais",
-            }
-            df_display.rename(columns=renames, inplace=True)
-
-            st.dataframe(df_display, use_container_width=True, hide_index=True)
-
+            st.dataframe(
+                df_ranking[colunas_existentes],
+                use_container_width=True,
+                hide_index=True,
+            )
     else:
         st.warning(
             "Nenhum palpite foi registrado ainda ou não há resultados processados."

@@ -1,6 +1,6 @@
 import json
 import pandas as pd
-from typing import List, Dict, Any
+from typing import List, Dict, Any, cast
 from sqlalchemy import text
 from db import get_engine_palpites
 
@@ -62,11 +62,13 @@ API_TO_APP_NAMES = {
     "Paraguay": "🇵🇾 Paraguai",
     "Jordan": "🇯🇴 Jordânia",
     "Curaçao": "🇨🇼 Curaçao",
-    "Austria": "🇦🇹 Áustria"
+    "Austria": "🇦🇹 Áustria",
 }
+
 
 def translate_team(api_name: str) -> str:
     return API_TO_APP_NAMES.get(api_name, api_name)
+
 
 def get_last_sync_time(sync_key: str):
     engine = get_engine_palpites()
@@ -77,29 +79,34 @@ def get_last_sync_time(sync_key: str):
             return result[0]
     return None
 
+
 def update_sync_time(sync_key: str):
     engine = get_engine_palpites()
-    query = text("""
+    query = text(
+        """
         INSERT INTO api_sync_log (sync_key, last_sync, updated_at)
         VALUES (:k, NOW(), NOW())
         ON CONFLICT (sync_key) DO UPDATE SET
             last_sync = EXCLUDED.last_sync,
             updated_at = EXCLUDED.updated_at
-    """)
+    """
+    )
     with engine.connect() as conn:
         conn.execute(query, {"k": sync_key})
         conn.commit()
 
+
 def upsert_fixtures(fixtures_data: List[Dict[str, Any]]) -> bool:
     engine = get_engine_palpites()
     new_finished = False
-    
+
     query_existing = text("SELECT fixture_id, status_short FROM real_results")
     with engine.connect() as conn:
         existing = conn.execute(query_existing).fetchall()
         existing_status = {row[0]: row[1] for row in existing}
-    
-    upsert_sql = text("""
+
+    upsert_sql = text(
+        """
         INSERT INTO real_results (
             fixture_id, league_id, season, match_date, status_short, status_long, 
             home_team_id, away_team_id, home_team_api, away_team_api, 
@@ -127,20 +134,21 @@ def upsert_fixtures(fixtures_data: List[Dict[str, Any]]) -> bool:
             api_raw_json = EXCLUDED.api_raw_json,
             updated_at = NOW(),
             synced_at = EXCLUDED.synced_at
-    """)
-    
+    """
+    )
+
     with engine.begin() as conn:
         for f in fixtures_data:
             f_id = f["fixture"]["id"]
             status_short = f["fixture"]["status"]["short"]
-            
+
             if status_short in FINISHED_STATUSES:
                 if existing_status.get(f_id) not in FINISHED_STATUSES:
                     new_finished = True
-            
+
             home_api = f["teams"]["home"]["name"]
             away_api = f["teams"]["away"]["name"]
-            
+
             params = {
                 "f_id": f_id,
                 "l_id": f["league"]["id"],
@@ -159,12 +167,21 @@ def upsert_fixtures(fixtures_data: List[Dict[str, Any]]) -> bool:
                 "hp": f["score"]["penalty"]["home"],
                 "ap": f["score"]["penalty"]["away"],
                 "rnd": f["league"]["round"],
-                "raw": json.dumps(f)
+                "raw": json.dumps(f),
             }
             conn.execute(upsert_sql, params)
-            
+
     return new_finished
+
 
 def get_all_real_results() -> pd.DataFrame:
     engine = get_engine_palpites()
-    return pd.read_sql("SELECT * FROM real_results ORDER BY match_date ASC;", engine)
+
+    query = """
+        SELECT *
+        FROM real_results
+        ORDER BY match_date ASC;
+    """
+
+    with engine.connect() as conn:
+        return pd.read_sql_query(query, cast(Any, conn))
