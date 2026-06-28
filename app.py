@@ -92,93 +92,189 @@ from streamlit_option_menu import option_menu
 from results_repository import get_last_sync_time
 
 # ==========================================
-# SIDEBAR NAVIGATION
+# GESTÃO DE TEMA E SIDEBAR NAVIGATION
 # ==========================================
 
-# Injetar o CSS no container principal para que continue ativo quando a sidebar for fechada!
-st.markdown(
-    """
+if "theme_choice" not in st.session_state:
+    st.session_state.theme_choice = "🌙 Escuro"
+
+def aplicar_tema(theme_choice: str):
+    if theme_choice == "☀️ Claro":
+        bg_main = "#F8FAFC"
+        bg_card = "#FFFFFF"
+        bg_sidebar = "#EEF2FF"
+        text_main = "#0F172A"
+        text_muted = "#475569"
+        border = "#CBD5E1"
+        primary = "#4F46E5"
+        accent = "#2563EB"
+    else:
+        bg_main = "#0B1020"
+        bg_card = "#1E1B3A"
+        bg_sidebar = "#17162E"
+        text_main = "#F8FAFC"
+        text_muted = "#CBD5E1"
+        border = "#334155"
+        primary = "#6366F1"
+        accent = "#60A5FA"
+
+    css = f"""
 <style>
-    [data-testid="stSidebar"] {
-        background-color: #1a1a2e;
-        color: white;
-    }
-    .sidebar-title {
+    .stApp {{
+        background-color: {bg_main};
+        color: {text_main};
+    }}
+    
+    [data-testid="stSidebar"] {{
+        background-color: {bg_sidebar} !important;
+    }}
+    
+    .sidebar-title {{
         font-size: 24px;
         font-weight: bold;
-        color: #ffffff;
+        color: {text_main};
         margin-bottom: 0px;
-    }
-    .sidebar-subtitle {
+    }}
+    .sidebar-subtitle {{
         font-size: 14px;
-        color: #a0a0b0;
+        color: {text_muted};
         margin-bottom: 20px;
-    }
-    .status-box {
-        background-color: #242442;
+    }}
+    .status-box {{
+        background-color: {bg_card};
         padding: 10px;
         border-radius: 8px;
         margin-top: 10px;
         font-size: 13px;
-    }
-    .status-item {
+        border: 1px solid {border};
+    }}
+    .status-item {{
         margin: 5px 0;
-        color: #e0e0e0;
-    }
+        color: {text_main};
+    }}
     
     /* Botão de abrir a sidebar (menu) */
-    [data-testid="collapsedControl"] {
+    [data-testid="collapsedControl"] {{
         top: 18px !important;
         left: 18px !important;
         width: 82px !important;
         height: 42px !important;
         border-radius: 14px !important;
-        background: linear-gradient(135deg, #1d4ed8, #7c3aed) !important;
+        background: linear-gradient(135deg, {primary}, {accent}) !important;
         border: 1px solid rgba(255, 255, 255, 0.22) !important;
-        box-shadow: 0 0 18px rgba(59, 130, 246, 0.55) !important;
+        box-shadow: 0 0 18px rgba(0, 0, 0, 0.2) !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
         transition: all 0.2s ease-in-out !important;
         z-index: 999999 !important;
-    }
+    }}
 
-    [data-testid="collapsedControl"]:hover {
+    [data-testid="collapsedControl"]:hover {{
         transform: scale(1.06);
-        box-shadow: 0 0 24px rgba(96, 165, 250, 0.85) !important;
-        background: linear-gradient(135deg, #2563eb, #9333ea) !important;
-    }
+        box-shadow: 0 0 24px rgba(0, 0, 0, 0.3) !important;
+    }}
 
-    [data-testid="collapsedControl"] svg {
+    [data-testid="collapsedControl"] svg {{
         display: none !important;
-    }
+    }}
 
-    [data-testid="collapsedControl"]::after {
+    [data-testid="collapsedControl"]::after {{
         content: "☰ MENU";
         color: white;
         font-size: 13px;
         font-weight: 800;
         letter-spacing: 0.8px;
         line-height: 1;
-    }
+    }}
 
-    section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] {
+    section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] {{
         border-radius: 12px !important;
-        background: rgba(255, 255, 255, 0.08) !important;
-        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        background: rgba(128, 128, 128, 0.08) !important;
+        border: 1px solid rgba(128, 128, 128, 0.15) !important;
         transition: all 0.2s ease-in-out !important;
-    }
+    }}
 
-    section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"]:hover {
-        background: rgba(59, 130, 246, 0.25) !important;
-    }
+    section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"]:hover {{
+        background: rgba(128, 128, 128, 0.25) !important;
+    }}
+
+    /* Estilos do Ranking e Cards Globais */
+    .ranking-card {{
+        background-color: {bg_card};
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 12px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        border: 1px solid {border};
+        border-left: 5px solid {primary};
+        color: {text_main};
+    }}
+    .podium-card {{
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 15px;
+        text-align: center;
+        box-shadow: 0 8px 12px rgba(0,0,0,0.15);
+    }}
+    .gold-card {{ background: linear-gradient(135deg, #FFD700, #DAA520); color: #111; border: 2px solid #FFF8DC; }}
+    .silver-card {{ background: linear-gradient(135deg, #E0E0E0, #A9A9A9); color: #111; border: 2px solid #F8F8FF; }}
+    .bronze-card {{ background: linear-gradient(135deg, #CD7F32, #8B4513); color: #fff; border: 2px solid #FFDAB9; }}
+    .score-big {{ font-size: 32px; font-weight: 900; margin: 10px 0; color: {text_main}; }}
+    .ranking-meta {{ font-size: 14px; opacity: 0.95; margin: 4px 0; color: {text_muted}; }}
+    .other-rank-name {{ font-size: 18px; font-weight: bold; margin-bottom: 5px; }}
+    .flex-row {{ display: flex; justify-content: space-between; align-items: center; }}
+
+    .summary-card {{
+        background-color: {bg_card};
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        border: 1px solid {border};
+        color: {text_main};
+    }}
+    .summary-main {{
+        font-size: 18px;
+        margin-bottom: 15px;
+    }}
+    .summary-grid {{
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+        margin-bottom: 15px;
+        text-align: center;
+    }}
+    .summary-grid div {{
+        background-color: {bg_main};
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid {border};
+    }}
+    .summary-grid span {{
+        display: block;
+        font-size: 12px;
+        color: {text_muted};
+    }}
+    .summary-grid strong {{
+        display: block;
+        font-size: 20px;
+        color: {primary};
+    }}
+    .summary-second {{
+        font-size: 15px;
+        padding: 10px;
+        background-color: {bg_main};
+        border-radius: 8px;
+        border-left: 4px solid {border};
+        color: {text_main};
+    }}
 </style>
-""",
-    unsafe_allow_html=True,
-)
+"""
+    st.markdown(css, unsafe_allow_html=True)
+
 
 with st.sidebar:
-
     st.markdown(
         '<p class="sidebar-title">🏆 IAPredict Copa 2026</p>', unsafe_allow_html=True
     )
@@ -187,33 +283,55 @@ with st.sidebar:
         unsafe_allow_html=True,
     )
 
+    theme_choice = st.radio(
+        "Tema",
+        ["🌙 Escuro", "☀️ Claro"],
+        horizontal=True,
+        index=0 if st.session_state.theme_choice == "🌙 Escuro" else 1
+    )
+    st.session_state.theme_choice = theme_choice
+
+    aplicar_tema(st.session_state.theme_choice)
+
+    if st.session_state.theme_choice == "☀️ Claro":
+        nav_hover = "#E0E7FF"
+        nav_selected = "#C7D2FE"
+        icon_color = "#0F172A"
+        nav_text = "#0F172A"
+    else:
+        nav_hover = "#242442"
+        nav_selected = "#4b4b9e"
+        icon_color = "white"
+        nav_text = "white"
+
     selected = option_menu(
         menu_title=None,
         options=[
-            "Probabilidades",
-            "Explorador",
             "Ranking",
+            "Probabilidades Pré-Copa",
+            "Explorador",
             "Estatísticas Tempo Real",
         ],
-        icons=["trophy-fill", "dice-5-fill", "search", "award-fill", "graph-up-arrow"],
+        icons=["award-fill", "trophy-fill", "search", "graph-up-arrow"],
         default_index=0,
         styles={
             "container": {"padding": "0!important", "background-color": "transparent"},
-            "icon": {"color": "white", "font-size": "18px"},
+            "icon": {"color": icon_color, "font-size": "18px"},
             "nav-link": {
+                "color": nav_text,
                 "font-size": "16px",
                 "text-align": "left",
                 "margin": "0px",
-                "--hover-color": "#242442",
+                "--hover-color": nav_hover,
             },
-            "nav-link-selected": {"background-color": "#4b4b9e"},
+            "nav-link-selected": {"background-color": nav_selected, "color": nav_text},
         },
     )
 
     page_map = {
-        "Probabilidades": "Probabilidades Pré-computadas",
-        "Explorador": "Explorador de partidas",
         "Ranking": "Ranking dos Palpites",
+        "Probabilidades Pré-Copa": "Probabilidades Pré-computadas",
+        "Explorador": "Explorador de partidas",
         "Estatísticas Tempo Real": "Estatísticas em tempo real",
     }
 
@@ -448,37 +566,7 @@ elif page == "Ranking dos Palpites":
     from results_repository import upsert_fixtures, get_last_sync_time, update_sync_time
     import datetime
 
-    # CSS Customizado
-    st.markdown(
-        """
-    <style>
-    .ranking-card {
-        background-color: #242442;
-        border-radius: 10px;
-        padding: 15px;
-        margin-bottom: 12px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        border-left: 5px solid #4b4b9e;
-        color: #fff;
-    }
-    .podium-card {
-        border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 15px;
-        text-align: center;
-        box-shadow: 0 8px 12px rgba(0,0,0,0.4);
-    }
-    .gold-card { background: linear-gradient(135deg, #FFD700, #DAA520); color: #111; border: 2px solid #FFF8DC; }
-    .silver-card { background: linear-gradient(135deg, #E0E0E0, #A9A9A9); color: #111; border: 2px solid #F8F8FF; }
-    .bronze-card { background: linear-gradient(135deg, #CD7F32, #8B4513); color: #fff; border: 2px solid #FFDAB9; }
-    .score-big { font-size: 32px; font-weight: 900; margin: 10px 0; }
-    .ranking-meta { font-size: 14px; opacity: 0.95; margin: 4px 0; }
-    .other-rank-name { font-size: 18px; font-weight: bold; margin-bottom: 5px; }
-    .flex-row { display: flex; justify-content: space-between; align-items: center; }
-    </style>
-    """,
-        unsafe_allow_html=True,
-    )
+    # CSS Customizado foi movido para a função aplicar_tema()
 
     col1, col2 = st.columns([3, 1])
 
