@@ -629,7 +629,11 @@ elif page == "Ranking dos Palpites":
             mata_mata = row.get("score_mata_mata", 0)
             finais = row.get("score_finais", 0)
 
-            titulo = f"#{pos} {medalha} &mdash; {nome}" if medalha else f"#{pos} &mdash; {nome}"
+            titulo = (
+                f"#{pos} {medalha} &mdash; {nome}"
+                if medalha
+                else f"#{pos} &mdash; {nome}"
+            )
 
             card_html = dedent(
                 f"""
@@ -673,7 +677,9 @@ elif page == "Ranking dos Palpites":
             st.markdown("### 🏃 Demais Participantes")
 
             for i in range(3, len(df_ranking)):
-                render_ranking_card(df_ranking.iloc[i], index=i, destaque_cor="#6366f1", medalha="")
+                render_ranking_card(
+                    df_ranking.iloc[i], index=i, destaque_cor="#6366f1", medalha=""
+                )
 
         # === TABELA COMPLETA OPCIONAL ===
         with st.expander("📋 Ver tabela completa"):
@@ -696,6 +702,15 @@ elif page == "Ranking dos Palpites":
                 use_container_width=True,
                 hide_index=True,
             )
+
+        # === SEÇÃO 4: VISUALIZADOR DE PALPITES ===
+        try:
+            from palpites_viewer import render_user_predictions
+
+            render_user_predictions(df_palpites)
+        except Exception as e:
+            st.error(f"Erro ao carregar visualizador de palpites: {e}")
+
     else:
         st.warning(
             "Nenhum palpite foi registrado ainda ou não há resultados processados."
